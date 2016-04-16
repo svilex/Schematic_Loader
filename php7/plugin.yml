@@ -1,0 +1,11 @@
+name: Schematic_Loader
+author: svile
+description: Schematic loader plugin
+main: svile\sch\SCHmain
+version: 0.1
+api: [1.13.0]
+load: STARTUP
+
+commands:
+ sch:
+  description: Schematic_Loader main command
