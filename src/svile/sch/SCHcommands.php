@@ -44,6 +44,8 @@ namespace svile\sch;
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
 
+use pocketmine\block\Block;
+
 use pocketmine\Player;
 
 
@@ -127,12 +129,20 @@ class SCHcommands
                 }
 
                 $SCHname = array_shift($args);
-                //TODO: check not allowed characters - replace "schematic"
 
-                $path = $this->pg->getDataFolder() . 'created_schematics/' . $SCHname . '.schematic';
-                //TODO: check if file exists
+                $path = $this->pg->getDataFolder() . 'schematic_files/' . $SCHname;
+                if (!is_file($path)) {
+                    $sender->sendMessage('§b→ §f' . $path . '§c not found');
+                    break;
+                }
 
-                //TODO: paste schematic
+                $schematic = new SCH($this->pg, $path);
+
+                foreach ($schematic->getBlocksArray() as $block) {
+                    $pos = $sender->getPosition()->add($block[0], $block[1], $block[2]);
+                    $sender->getLevel()->setBlock($pos, Block::get($block[3], $block[4]), false, false);
+                    $sender->getLevel()->setBlockLightAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ(), 15);
+                }
 
                 $sender->sendMessage('§b→ §f' . realpath($path) . '§a pasted successfully');
                 break;
