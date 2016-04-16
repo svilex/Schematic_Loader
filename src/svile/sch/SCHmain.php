@@ -77,10 +77,6 @@ class SCHmain extends PluginBase
         //svile\sch\SCHcommands object
         $this->commands = new SCHcommands($this);
 
-        //Register timer and listener
-        //$this->getServer()->getScheduler()->scheduleRepeatingTask(new SCHtimer($this), 19);
-        $this->getServer()->getPluginManager()->registerEvents(new SCHlistener($this), $this);
-
         $this->getLogger()->info(@str_replace('\n', PHP_EOL, @gzinflate(@base64_decode("pZCxDoIwFEV/pbOJdGcSI2\x47\x51uOhI0pT6bBtbSsqr0S/iP/gy0woDjvrGc8+9w2u6pptGM41i88vNZSgCKudzMo234aENLPyo7wmy\x52NmCL2BAem5Z5V3ok6EQ+yGnFOcos0BXU+XWcm2Siwp\x69\x5aGAnI8uEs4tVaVShXS3KhKL0GXzSs1BgOWrBasev4Ody+81Jb4LUHWlfJDXjLC9Pxb4uD3++7Q0="))));
     }
 
@@ -92,14 +88,4 @@ class SCHmain extends PluginBase
         }
         return true;
     }
-
-    /*
-                      _
-       __ _   _ __   (_)
-      / _` | | '_ \  | |
-     | (_| | | |_) | | |
-      \__,_| | .__/  |_|
-             |_|
-
-    */
 }
