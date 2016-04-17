@@ -46,6 +46,11 @@ use pocketmine\command\Command;
 
 use pocketmine\block\Block;
 
+use pocketmine\nbt\NBT;
+use pocketmine\nbt\tag\ByteArrayTag;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\ShortTag;
+use pocketmine\nbt\tag\StringTag;
 use pocketmine\Player;
 
 
@@ -73,11 +78,6 @@ class SCHcommands
      */
     public function onCommand(CommandSender $sender, Command $command, $label, array $args) : bool
     {
-        if (!($sender instanceof Player) or !$sender->isOp()) {
-            //Can't use this command, non OP or non Player
-            return true;
-        }
-
         //Searchs for a valid option
         switch (strtolower(array_shift($args))):
 
@@ -98,13 +98,22 @@ class SCHcommands
 
                 //Schematic file name
                 $SCHname = array_shift($args);
-                //TODO: check not allowed characters - replace "schematic"
 
                 $path = $this->pg->getDataFolder() . 'created_schematics/' . $SCHname . '.schematic';
-                //TODO: check if file already exists
+                touch($path);
 
-                //TODO: ask for a selection
-                //TODO: create schematic file
+                $nbt = new NBT(NBT::BIG_ENDIAN);
+                $nbt->setData(new CompoundTag
+                ('Schematic', [
+                    new ByteArrayTag('Blocks', chr(1)),
+                    new ByteArrayTag('Data', chr(0)),
+                    new ShortTag('Height', 1),
+                    new ShortTag('Length', 1),
+                    new ShortTag('Width', 1),
+                    new StringTag('Materials', 'Alpha')
+                ]));
+
+                file_put_contents($path, $nbt->writeCompressed());
 
                 if (is_file($path))
                     $sender->sendMessage('§b→ §f' . realpath($path) . '§a created successfully');
@@ -138,10 +147,12 @@ class SCHcommands
 
                 $schematic = new SCH($this->pg, $path);
 
-                foreach ($schematic->getBlocksArray() as $block) {
-                    $pos = $sender->getPosition()->add($block[0], $block[1], $block[2]);
-                    $sender->getLevel()->setBlock($pos, Block::get($block[3], $block[4]), false, false);
-                    $sender->getLevel()->setBlockLightAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ(), 15);
+                if ($sender instanceof Player) {
+                    foreach ($schematic->blocks_array as $block) {
+                        $pos = $sender->getPosition()->add($block[0], $block[1], $block[2]);
+                        $sender->getLevel()->setBlock($pos, Block::get($block[3], $block[4]), false, false);
+                        $sender->getLevel()->setBlockLightAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ(), 15);
+                    }
                 }
 
                 $sender->sendMessage('§b→ §f' . realpath($path) . '§a pasted successfully');

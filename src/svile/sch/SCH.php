@@ -49,19 +49,19 @@ class SCH
     /** @var SCHmain */
     private $pg;
     /** @var string */
-    private $path;
+    public $path;
     /** @var NBT */
-    private $nbt;
-    private $blocks;
-    private $data;
+    public $nbt;
+    public $blocks;
+    public $data;
     /** @var int */
-    private $height = 0;
+    public $height = 0;
     /** @var int */
-    private $length = 0;
+    public $length = 0;
     /** @var int */
-    private $width = 0;
+    public $width = 0;
     /** @var array */
-    private $blocks_array = [];
+    public $blocks_array = [];
 
     /**
      * SCH constructor.
@@ -83,9 +83,9 @@ class SCH
         $this->length = (int)$data->Length->getValue();
         $this->width = (int)$data->Width->getValue();
 
-        for ($x = 0; $x < $this->width; $x++) {
+        for ($z = 0; $z < $this->length; $z++) {
             for ($y = 0; $y < $this->height; $y++) {
-                for ($z = 0; $z < $this->length; $z++) {
+                for ($x = 0; $x < $this->width; $x++) {
                     $i = $y * $this->width * $this->length + $z * $this->width + $x;
                     $id = $this::readByte($this->blocks, $i);
                     $damage = $this::readByte($this->data, $i);
@@ -103,8 +103,35 @@ class SCH
                             $id = 20;
                             $damage = 0;
                             break;
+                        case 160:
+                            $id = 102;
+                            $damage = 0;
+                            break;
+                        case 188:
+                            $id = 85;
+                            $damage = 1;
+                            break;
+                        case 189:
+                            $id = 85;
+                            $damage = 2;
+                            break;
+                        case 190:
+                            $id = 85;
+                            $damage = 3;
+                            break;
+                        case 191:
+                            $id = 85;
+                            $damage = 4;
+                            break;
+                        case 192:
+                            $id = 85;
+                            $damage = 5;
+                            break;
                     endswitch;
                     $this->blocks_array[] = [$x, $y, $z, $id, $damage];
+
+                    //echo PHP_EOL;
+                    //echo "$x:$y:$z => $i";
                 }
             }
         }
@@ -117,61 +144,5 @@ class SCH
             return $b << 56 >> 56;
         else
             return $b << 24 >> 24;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPath()
-    {
-        return $this->path;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getBlocks()
-    {
-        return $this->blocks;
-    }
-
-    /**
-     * @return array
-     */
-    public function getBlocksArray()
-    {
-        return $this->blocks_array;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getData()
-    {
-        return $this->data;
-    }
-
-    /**
-     * @return int
-     */
-    public function getHeight()
-    {
-        return $this->height;
-    }
-
-    /**
-     * @return int
-     */
-    public function getLength()
-    {
-        return $this->length;
-    }
-
-    /**
-     * @return int
-     */
-    public function getWidth()
-    {
-        return $this->width;
     }
 }
