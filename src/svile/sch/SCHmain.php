@@ -153,12 +153,12 @@ class SCHmain extends PluginBase implements Listener
                     touch($path);
                     $nbt = new NBT(NBT::BIG_ENDIAN);
                     $nbt->readCompressed(file_get_contents($path));
-                    $data = $nbt->getData();
-                    $blocks = $data->Blocks->getValue();
-                    $data = $data->Data->getValue();
-                    $height = (int)$data->Height->getValue();
-                    $length = (int)$data->Length->getValue();
-                    $width = (int)$data->Width->getValue();
+                    $dataa = $nbt->getData();
+                    $blocks = $dataa->Blocks->getValue();
+                    $data = $dataa->Data->getValue();
+                    $height = (int)$dataa->Height->getValue();
+                    $length = (int)$dataa->Length->getValue();
+                    $width = (int)$dataa->Width->getValue();
                     $i = -1;
                     if ($sender instanceof Player)
                         $pp = $sender->getPosition()->floor()->add(1, 0, 1);
@@ -265,9 +265,9 @@ class SCHmain extends PluginBase implements Listener
         $pos1 = new Vector3($c[0][0], $c[0][1], $c[0][2]);
         $pos2 = new Vector3($c[1][0], $c[1][1], $c[1][2]);
 
-        $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y);
-        $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z);
-        $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x);
+        $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y) + 1;
+        $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z) + 1;
+        $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x) + 1;
 
         $blocks = '';
         $data = '';
