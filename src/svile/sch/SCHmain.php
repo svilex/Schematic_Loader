@@ -46,13 +46,19 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
 
+use pocketmine\block\Block;
+use pocketmine\Player;
+
+use pocketmine\nbt\NBT;
+use pocketmine\nbt\tag\ByteArrayTag;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\ShortTag;
+use pocketmine\nbt\tag\StringTag;
+
 
 class SCHmain extends PluginBase
 {
     const SCH_VERSION = 0.1;
-
-    /** @var SCHcommands */
-    private $commands;
 
     public function onLoad()
     {
@@ -60,7 +66,6 @@ class SCHmain extends PluginBase
         if (!@is_dir($this->getDataFolder())) {
             //rwx permissions and recursive mkdir();
             @mkdir($this->getDataFolder() . "\x73\x63\x68\x65\x6d\x61\x74\x69\x63\x5f\x66\x69\x6c\x65\x73", 0755, true);
-            @mkdir($this->getDataFolder() . "\x63\x72\x65\x61\x74\x65\x64\x5f\x73\x63\x68\x65\x6d\x61\x74\x69\x63\x73", 0755);
         }
     }
 
@@ -74,18 +79,187 @@ class SCHmain extends PluginBase
             $this->getServer()->getPluginManager()->disablePlugin($this);
         }
 
-        //svile\sch\SCHcommands object
-        $this->commands = new SCHcommands($this);
-
         $this->getLogger()->info(@str_replace('\n', PHP_EOL, @gzinflate(@base64_decode("pZCxDoIwFEV/pbOJdGcSI2\x47\x51uOhI0pT6bBtbSsqr0S/iP/gy0woDjvrGc8+9w2u6pptGM41i88vNZSgCKudzMo234aENLPyo7wmy\x52NmCL2BAem5Z5V3ok6EQ+yGnFOcos0BXU+XWcm2Siwp\x69\x5aGAnI8uEs4tVaVShXS3KhKL0GXzSs1BgOWrBasev4Ody+81Jb4LUHWlfJDXjLC9Pxb4uD3++7Q0="))));
     }
 
     public function onCommand(CommandSender $sender, Command $command, $label, array $args)
     {
         if (strtolower($command->getName()) == 'sch') {
-            //If SCH command, just call svile\sch\SCHcommands->onCommand();
-            $this->commands->onCommand($sender, $command, $label, $args);
+            //Searchs for a valid option
+            switch (strtolower(array_shift($args))):
+
+
+                case 'create':
+                    /*
+                                              _
+                      ___  _ __   ___   __ _ | |_   ___
+                     / __|| '__| / _ \ / _` || __| / _ \
+                    | (__ | |   |  __/| (_| || |_ |  __/
+                     \___||_|    \___| \__,_| \__| \___|
+
+                    */
+                    if (count($args) != 1) {
+                        $sender->sendMessage('§b→§cUsage: /sch§a create [SCHname]');
+                        break;
+                    }
+
+                    //Schematic file name
+                    $SCHname = str_replace('', '', str_replace('.schematic', '', trim(array_shift($args))));
+
+                    $path = $this->getDataFolder() . 'schematic_files/' . $SCHname . '.schematic';
+                    if (is_file($path)) {
+                        $sender->sendMessage('§b→ §f' . realpath($path) . '§c already exists');
+                        break;
+                    }
+                    touch($path);
+
+                    $h = ;
+                    $l = ;
+                    $w = ;
+
+                    $blocks = ;
+                    $data = ;
+
+                    $nbt = new NBT(NBT::BIG_ENDIAN);
+                    $nbt->setData(new CompoundTag
+                    ('Schematic', [
+                        new ByteArrayTag('Blocks', $blocks),
+                        new ByteArrayTag('Data', $data),
+                        new ShortTag('Height', $h),
+                        new ShortTag('Length', $l),
+                        new ShortTag('Width', $w),
+                        new StringTag('Materials', 'Alpha')
+                    ]));
+
+                    file_put_contents($path, $nbt->writeCompressed());
+
+                    if (is_file($path))
+                        $sender->sendMessage('§b→ §f' . realpath($path) . '§a created successfully');
+                    else
+                        $sender->sendMessage('§b→§cI can\'t find §f ' . $path . '§c i\'ve got write access?');
+                    break;
+
+
+                case 'paste':
+                    /*
+                                           _
+                     _ __     __ _   ___  | |_    ___
+                    | '_ \   / _` | / __| | __|  / _ \
+                    | |_) | | (_| | \__ \ | |_  |  __/
+                    | .__/   \__,_| |___/  \__|  \___|
+                    |_|
+
+                    */
+                    if (count($args) != 1) {
+                        $sender->sendMessage('§b→§cUsage: /sch §apaste [FileName]');
+                        break;
+                    }
+
+                    $SCHname = array_shift($args);
+
+                    $path = $this->getDataFolder() . 'schematic_files/' . $SCHname;
+                    if (!is_file($path)) {
+                        $sender->sendMessage('§b→ §f' . $path . '§c not found');
+                        break;
+                    }
+
+                    touch($path);
+                    $nbt = new NBT(NBT::BIG_ENDIAN);
+                    $nbt->readCompressed(file_get_contents($path));
+                    $data = $nbt->getData();
+                    $blocks = $data->Blocks->getValue();
+                    $data = $data->Data->getValue();
+                    $height = (int)$data->Height->getValue();
+                    $length = (int)$data->Length->getValue();
+                    $width = (int)$data->Width->getValue();
+                    $i = -1;
+                    if ($sender instanceof Player)
+                        $pp = $sender->getPosition()->floor()->add(1, 0, 1);
+                    for ($y = 0; $y < $height; $y++) {
+                        for ($z = 0; $z < $length; $z++) {
+                            for ($x = 0; $x < $width; $x++) {
+                                $i++;
+                                $id = $this::readByte($blocks, $i);
+                                $damage = $this::readByte($data, $i);
+                                switch ($id):
+                                    case 126:
+                                        $id = 158;
+                                        break;
+                                    case 125:
+                                        $id = 157;
+                                        break;
+                                    case 157:
+                                        $id = 126;
+                                        break;
+                                    case 95:
+                                        $id = 20;
+                                        $damage = 0;
+                                        break;
+                                    case 160:
+                                        $id = 102;
+                                        $damage = 0;
+                                        break;
+                                    case 188:
+                                        $id = 85;
+                                        $damage = 1;
+                                        break;
+                                    case 189:
+                                        $id = 85;
+                                        $damage = 2;
+                                        break;
+                                    case 190:
+                                        $id = 85;
+                                        $damage = 3;
+                                        break;
+                                    case 191:
+                                        $id = 85;
+                                        $damage = 4;
+                                        break;
+                                    case 192:
+                                        $id = 85;
+                                        $damage = 5;
+                                        break;
+                                endswitch;
+
+                                //echo "$x:$y:$z => $i".PHP_EOL;
+
+                                if ($sender instanceof Player) {
+                                    $pos = $pp->add($x, $y, $z);
+                                    $sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
+                                    $sender->getLevel()->setBlockLightAt($pos->x, $pos->y, $pos->z, 15);
+                                }
+                            }
+                        }
+                    }
+
+                    $sender->sendMessage('§b→ §f' . realpath($path) . '§a pasted successfully');
+                    break;
+
+
+                default:
+                    //No option found, usage
+                    $sender->sendMessage('§b→§cUsage: /sch [create|paste]');
+                    break;
+
+
+            endswitch;
+            return true;
         }
         return true;
+    }
+
+    private static function readByte($c, $i = 0)
+    {
+        $b = ord($c{$i});
+        if (PHP_INT_SIZE === 8)
+            return $b << 56 >> 56;
+        else
+            return $b << 24 >> 24;
+    }
+
+    //useless ? I don't care
+    private static function writeByte($c)
+    {
+        return chr($c);
     }
 }
