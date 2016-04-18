@@ -82,11 +82,11 @@ class SCH
         $this->height = (int)$data->Height->getValue();
         $this->length = (int)$data->Length->getValue();
         $this->width = (int)$data->Width->getValue();
-
-        for ($z = 0; $z < $this->length; $z++) {
-            for ($y = 0; $y < $this->height; $y++) {
+        $i = -1;
+        for ($y = 0; $y < $this->height; $y++) {
+            for ($z = 0; $z < $this->length; $z++) {
                 for ($x = 0; $x < $this->width; $x++) {
-                    $i = $y * $this->width * $this->length + $z * $this->width + $x;
+                    $i++;
                     $id = $this::readByte($this->blocks, $i);
                     $damage = $this::readByte($this->data, $i);
                     switch ($id):
