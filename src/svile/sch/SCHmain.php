@@ -41,6 +41,9 @@
 namespace svile\sch;
 
 
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\math\Vector3;
 use pocketmine\plugin\PluginBase;
 
 use pocketmine\command\CommandSender;
@@ -56,9 +59,11 @@ use pocketmine\nbt\tag\ShortTag;
 use pocketmine\nbt\tag\StringTag;
 
 
-class SCHmain extends PluginBase
+class SCHmain extends PluginBase implements Listener
 {
     const SCH_VERSION = 0.1;
+
+    private $players = [];
 
     public function onLoad()
     {
@@ -79,6 +84,7 @@ class SCHmain extends PluginBase
             $this->getServer()->getPluginManager()->disablePlugin($this);
         }
 
+        $this->getServer()->getPluginManager()->registerEvents($this, $this);
         $this->getLogger()->info(@str_replace('\n', PHP_EOL, @gzinflate(@base64_decode("pZCxDoIwFEV/pbOJdGcSI2\x47\x51uOhI0pT6bBtbSsqr0S/iP/gy0woDjvrGc8+9w2u6pptGM41i88vNZSgCKudzMo234aENLPyo7wmy\x52NmCL2BAem5Z5V3ok6EQ+yGnFOcos0BXU+XWcm2Siwp\x69\x5aGAnI8uEs4tVaVShXS3KhKL0GXzSs1BgOWrBasev4Ody+81Jb4LUHWlfJDXjLC9Pxb4uD3++7Q0="))));
     }
 
@@ -103,40 +109,21 @@ class SCHmain extends PluginBase
                         break;
                     }
 
-                    //Schematic file name
-                    $SCHname = str_replace('', '', str_replace('.schematic', '', trim(array_shift($args))));
+                    if ($sender instanceof Player) {
+                        //Schematic file name
+                        $SCHname = str_replace(/*not allowed char?*/
+                            '', '', str_replace('.schematic', '', trim(array_shift($args))));
 
-                    $path = $this->getDataFolder() . 'schematic_files/' . $SCHname . '.schematic';
-                    if (is_file($path)) {
-                        $sender->sendMessage('§b→ §f' . realpath($path) . '§c already exists');
-                        break;
+                        $path = $this->getDataFolder() . 'schematic_files/' . $SCHname . '.schematic';
+                        if (is_file($path)) {
+                            $sender->sendMessage('§b→ §f' . realpath($path) . '§c already exists');
+                            break;
+                        }
+                        touch($path);
+
+                        $this->players[$sender->getName()] = [$path];
+                        $sender->sendMessage('Tap the 1st block');
                     }
-                    touch($path);
-
-                    $h = ;
-                    $l = ;
-                    $w = ;
-
-                    $blocks = ;
-                    $data = ;
-
-                    $nbt = new NBT(NBT::BIG_ENDIAN);
-                    $nbt->setData(new CompoundTag
-                    ('Schematic', [
-                        new ByteArrayTag('Blocks', $blocks),
-                        new ByteArrayTag('Data', $data),
-                        new ShortTag('Height', $h),
-                        new ShortTag('Length', $l),
-                        new ShortTag('Width', $w),
-                        new StringTag('Materials', 'Alpha')
-                    ]));
-
-                    file_put_contents($path, $nbt->writeCompressed());
-
-                    if (is_file($path))
-                        $sender->sendMessage('§b→ §f' . realpath($path) . '§a created successfully');
-                    else
-                        $sender->sendMessage('§b→§cI can\'t find §f ' . $path . '§c i\'ve got write access?');
                     break;
 
 
@@ -246,6 +233,74 @@ class SCHmain extends PluginBase
             return true;
         }
         return true;
+    }
+
+    public function onInteract(PlayerInteractEvent $ev)
+    {
+        if ($ev->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK)
+            return;
+        if (array_key_exists($ev->getPlayer()->getName(), $this->players)) {
+            switch (count($this->players[$ev->getPlayer()->getName()])) {
+                case 1:
+                    $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
+                    $ev->getPlayer()->sendMessage('Tap the block 2');
+                    break;
+                case 2:
+                    $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
+                    $ev->getPlayer()->sendMessage('Creating...');
+                    $this->createSch($this->players[$ev->getPlayer()->getName()], $ev->getPlayer());
+                    unset($this->players[$ev->getPlayer()->getName()]);
+                    break;
+                default:
+                    unset($this->players[$ev->getPlayer()->getName()]);
+                    break;
+            }
+        }
+    }
+
+    private function createSch($c, Player $sender)
+    {
+        $path = array_shift($c);
+
+        $pos1 = new Vector3($c[0][0], $c[0][1], $c[0][2]);
+        $pos2 = new Vector3($c[1][0], $c[1][1], $c[1][2]);
+
+        $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y);
+        $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z);
+        $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x);
+
+        $blocks = '';
+        $data = '';
+
+        for ($y = 0; $y < $h; $y++) {
+            for ($z = 0; $z < $l; $z++) {
+                for ($x = 0; $x < $w; $x++) {
+                    $block = $sender->getLevel()->getBlock($pos1->add($x, $y, $z));
+                    $id = $this::writeByte($block->getId());
+                    $damage = $this::writeByte($block->getDamage());
+                    $blocks .= $id;
+                    $data .= $damage;
+                }
+            }
+        }
+
+        $nbt = new NBT(NBT::BIG_ENDIAN);
+        $nbt->setData(new CompoundTag
+        ('Schematic', [
+            new ByteArrayTag('Blocks', $blocks),
+            new ByteArrayTag('Data', $data),
+            new ShortTag('Height', $h),
+            new ShortTag('Length', $l),
+            new ShortTag('Width', $w),
+            new StringTag('Materials', 'Alpha')
+        ]));
+
+        file_put_contents($path, $nbt->writeCompressed());
+
+        if (is_file($path))
+            $sender->sendMessage('§b→ §f' . realpath($path) . '§a created successfully');
+        else
+            $sender->sendMessage('§b→§cI can\'t find §f ' . $path . '§c i\'ve got write access?');
     }
 
     private static function readByte($c, $i = 0)
