@@ -358,14 +358,9 @@ class SCHmain extends PluginBase implements Listener
 
     private static function readByte($c, $i = 0)
     {
-        $b = ord($c{$i});
-        if (PHP_INT_SIZE === 8)
-            return $b << 56 >> 56;
-        else
-            return $b << 24 >> 24;
+        return ord($c{$i});
     }
 
-    //useless ? I don't care
     private static function writeByte($c)
     {
         return chr($c);
