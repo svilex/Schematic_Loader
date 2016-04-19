@@ -122,7 +122,7 @@ class SCHmain extends PluginBase implements Listener
                         touch($path);
 
                         $this->players[$sender->getName()] = [$path];
-                        $sender->sendMessage('Tap the 1st block');
+                        $sender->sendMessage('Break the 1st block');
                     }
                     break;
 
@@ -159,6 +159,7 @@ class SCHmain extends PluginBase implements Listener
                     $height = (int)$dataa->Height->getValue();
                     $length = (int)$dataa->Length->getValue();
                     $width = (int)$dataa->Width->getValue();
+                    echo "H(y):$height L(z):$length W(x):$width" . PHP_EOL;
                     $i = -1;
                     if ($sender instanceof Player)
                         $pp = $sender->getPosition()->floor()->add(1, 0, 1);
@@ -166,8 +167,8 @@ class SCHmain extends PluginBase implements Listener
                         for ($z = 0; $z < $length; $z++) {
                             for ($x = 0; $x < $width; $x++) {
                                 $i++;
-                                $id = $this::readByte($blocks, $i);
-                                $damage = $this::readByte($data, $i);
+                                $id = self::readByte($blocks, $i);
+                                $damage = self::readByte($data, $i);
                                 switch ($id):
                                     case 126:
                                         $id = 158;
@@ -208,10 +209,12 @@ class SCHmain extends PluginBase implements Listener
                                         break;
                                 endswitch;
 
-                                //echo "$x:$y:$z => $i".PHP_EOL;
+                                echo "$x:$y:$z => $i" . PHP_EOL;
 
                                 if ($sender instanceof Player) {
                                     $pos = $pp->add($x, $y, $z);
+                                    if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
+                                        $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
                                     $sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
                                     $sender->getLevel()->setBlockLightAt($pos->x, $pos->y, $pos->z, 15);
                                 }
@@ -243,7 +246,7 @@ class SCHmain extends PluginBase implements Listener
             switch (count($this->players[$ev->getPlayer()->getName()])) {
                 case 1:
                     $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
-                    $ev->getPlayer()->sendMessage('Tap the block 2');
+                    $ev->getPlayer()->sendMessage('Break the block 2');
                     break;
                 case 2:
                     $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
@@ -268,6 +271,7 @@ class SCHmain extends PluginBase implements Listener
         $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y) + 1;
         $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z) + 1;
         $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x) + 1;
+        echo "H(y):$h L(z):$l W(x):$w" . PHP_EOL;
 
         $blocks = '';
         $data = '';
@@ -276,8 +280,8 @@ class SCHmain extends PluginBase implements Listener
             for ($z = 0; $z < $l; $z++) {
                 for ($x = 0; $x < $w; $x++) {
                     $block = $sender->getLevel()->getBlock($pos1->add($x, $y, $z));
-                    $id = $this::writeByte($block->getId());
-                    $damage = $this::writeByte($block->getDamage());
+                    $id = self::writeByte($block->getId());
+                    $damage = self::writeByte($block->getDamage());
                     $blocks .= $id;
                     $data .= $damage;
                 }
