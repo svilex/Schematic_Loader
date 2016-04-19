@@ -42,14 +42,14 @@ namespace svile\sch;
 
 
 use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerInteractEvent;
-use pocketmine\math\Vector3;
 use pocketmine\plugin\PluginBase;
 
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
 
 use pocketmine\block\Block;
+use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 use pocketmine\nbt\NBT;
@@ -57,6 +57,10 @@ use pocketmine\nbt\tag\ByteArrayTag;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ShortTag;
 use pocketmine\nbt\tag\StringTag;
+//use pocketmine\nbt\tag\ByteArray;
+//use pocketmine\nbt\tag\Compound;
+//use pocketmine\nbt\tag\Short;
+//use pocketmine\nbt\tag\String;
 
 
 class SCHmain extends PluginBase implements Listener
@@ -122,7 +126,7 @@ class SCHmain extends PluginBase implements Listener
                         touch($path);
 
                         $this->players[$sender->getName()] = [$path];
-                        $sender->sendMessage('Break the 1st block');
+                        $sender->sendMessage('§cBreak the 1st block');
                     }
                     break;
 
@@ -159,7 +163,7 @@ class SCHmain extends PluginBase implements Listener
                     $height = (int)$dataa->Height->getValue();
                     $length = (int)$dataa->Length->getValue();
                     $width = (int)$dataa->Width->getValue();
-                    echo "H(y):$height L(z):$length W(x):$width" . PHP_EOL;
+                    //echo "H(y):$height L(z):$length W(x):$width" . PHP_EOL;
                     $i = -1;
                     if ($sender instanceof Player)
                         $pp = $sender->getPosition()->floor()->add(1, 0, 1);
@@ -209,10 +213,11 @@ class SCHmain extends PluginBase implements Listener
                                         break;
                                 endswitch;
 
-                                echo "$x:$y:$z => $i" . PHP_EOL;
+                                //echo "$x:$y:$z => $i" . PHP_EOL;
 
                                 if ($sender instanceof Player) {
                                     $pos = $pp->add($x, $y, $z);
+                                    if ($pos->y > 128) break 3;
                                     if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
                                         $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
                                     $sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
@@ -238,19 +243,18 @@ class SCHmain extends PluginBase implements Listener
         return true;
     }
 
-    public function onInteract(PlayerInteractEvent $ev)
+    public function onBlockBreak(BlockBreakEvent $ev)
     {
-        if ($ev->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK)
-            return;
         if (array_key_exists($ev->getPlayer()->getName(), $this->players)) {
+            $ev->setCancelled();
             switch (count($this->players[$ev->getPlayer()->getName()])) {
                 case 1:
                     $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
-                    $ev->getPlayer()->sendMessage('Break the block 2');
+                    $ev->getPlayer()->sendMessage('§cBreak the block 2');
                     break;
                 case 2:
                     $this->players[$ev->getPlayer()->getName()][] = [$ev->getBlock()->x, $ev->getBlock()->y, $ev->getBlock()->z];
-                    $ev->getPlayer()->sendMessage('Creating...');
+                    $ev->getPlayer()->sendMessage('§aCreating...');
                     $this->createSch($this->players[$ev->getPlayer()->getName()], $ev->getPlayer());
                     unset($this->players[$ev->getPlayer()->getName()]);
                     break;
@@ -271,7 +275,12 @@ class SCHmain extends PluginBase implements Listener
         $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y) + 1;
         $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z) + 1;
         $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x) + 1;
-        echo "H(y):$h L(z):$l W(x):$w" . PHP_EOL;
+        //echo "H(y):$h L(z):$l W(x):$w" . PHP_EOL;
+
+        $pos1->x < $pos2->x ? $minx = $pos1->x : $minx = $pos2->x;
+        $pos1->y < $pos2->y ? $miny = $pos1->y : $miny = $pos2->y;
+        $pos1->z < $pos2->z ? $minz = $pos1->z : $minz = $pos2->z;
+        $origin = new Vector3($minx, $miny, $minz);
 
         $blocks = '';
         $data = '';
@@ -279,11 +288,51 @@ class SCHmain extends PluginBase implements Listener
         for ($y = 0; $y < $h; $y++) {
             for ($z = 0; $z < $l; $z++) {
                 for ($x = 0; $x < $w; $x++) {
-                    $block = $sender->getLevel()->getBlock($pos1->add($x, $y, $z));
-                    $id = self::writeByte($block->getId());
-                    $damage = self::writeByte($block->getDamage());
-                    $blocks .= $id;
-                    $data .= $damage;
+                    $block = $sender->getLevel()->getBlock($origin->add($x, $y, $z));
+                    $id = $block->getId();
+                    $damage = $block->getDamage();
+
+                    switch ($id):
+                        case 158:
+                            $id = 126;
+                            break;
+                        case 157:
+                            $id = 125;
+                            break;
+                        case 126:
+                            $id = 157;
+                            break;
+                        case 85:
+                            switch ($damage) {
+                                case 1:
+                                    $id = 188;
+                                    $damage = 0;
+                                    break;
+                                case 2:
+                                    $id = 189;
+                                    $damage = 0;
+                                    break;
+                                case 3:
+                                    $id = 190;
+                                    $damage = 0;
+                                    break;
+                                case 4:
+                                    $id = 191;
+                                    $damage = 0;
+                                    break;
+                                case 5:
+                                    $id = 192;
+                                    $damage = 0;
+                                    break;
+                                default:
+                                    $damage = 0;
+                                    break;
+                            }
+                            break;
+                    endswitch;
+
+                    $blocks .= self::writeByte($id);
+                    $data .= self::writeByte($damage);
                 }
             }
         }
