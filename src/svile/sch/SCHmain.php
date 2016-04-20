@@ -47,16 +47,19 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
 
-use pocketmine\block\Block;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
+
+use pocketmine\network\protocol\UpdateBlockPacket;
+use pocketmine\Server;
 
 use pocketmine\nbt\NBT;
 use pocketmine\nbt\tag\ByteArrayTag;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ShortTag;
 use pocketmine\nbt\tag\StringTag;
+
 //use pocketmine\nbt\tag\ByteArray;
 //use pocketmine\nbt\tag\Compound;
 //use pocketmine\nbt\tag\Short;
@@ -68,6 +71,8 @@ class SCHmain extends PluginBase implements Listener
     const SCH_VERSION = 0.1;
 
     private $players = [];
+    private $tobesent = [];
+    private $set = [];
 
     public function onLoad()
     {
@@ -89,6 +94,8 @@ class SCHmain extends PluginBase implements Listener
         }
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getScheduler()->scheduleRepeatingTask(new SCHscheduler($this), 20);
+
         $this->getLogger()->info(@str_replace('\n', PHP_EOL, @gzinflate(@base64_decode("pZCxDoIwFEV/pbOJdGcSI2\x47\x51uOhI0pT6bBtbSsqr0S/iP/gy0woDjvrGc8+9w2u6pptGM41i88vNZSgCKudzMo234aENLPyo7wmy\x52NmCL2BAem5Z5V3ok6EQ+yGnFOcos0BXU+XWcm2Siwp\x69\x5aGAnI8uEs4tVaVShXS3KhKL0GXzSs1BgOWrBasev4Ody+81Jb4LUHWlfJDXjLC9Pxb4uD3++7Q0="))));
     }
 
@@ -114,9 +121,10 @@ class SCHmain extends PluginBase implements Listener
                     }
 
                     if ($sender instanceof Player) {
+
                         //Schematic file name
                         $SCHname = str_replace(/*not allowed char?*/
-                            '', '', str_replace('.schematic', '', trim(array_shift($args))));
+                            '', '', str_replace('.schematic', '', array_shift($args)));
 
                         $path = $this->getDataFolder() . 'schematic_files/' . $SCHname . '.schematic';
                         if (is_file($path)) {
@@ -131,27 +139,30 @@ class SCHmain extends PluginBase implements Listener
                     break;
 
 
-                case 'paste':
-                    /*
-                                           _
-                     _ __     __ _   ___  | |_    ___
-                    | '_ \   / _` | / __| | __|  / _ \
-                    | |_) | | (_| | \__ \ | |_  |  __/
-                    | .__/   \__,_| |___/  \__|  \___|
-                    |_|
-
-                    */
-                    if (count($args) != 1) {
-                        $sender->sendMessage('§b→§cUsage: /sch §apaste [FileName]');
+                case 'load':
+                    if (count($args) < 1 or count($args) > 2) {
+                        $sender->sendMessage('§b→§cUsage: /sch §aload [FileName] §7[seconds]');
                         break;
                     }
 
-                    $SCHname = array_shift($args);
+                    $SCHname = str_replace('.schematic', '', array_shift($args));
 
-                    $path = $this->getDataFolder() . 'schematic_files/' . $SCHname;
+                    $path = $this->getDataFolder() . 'schematic_files/' . $SCHname . '.schematic';
                     if (!is_file($path)) {
                         $sender->sendMessage('§b→ §f' . $path . '§c not found');
                         break;
+                    }
+
+                    //never tryed seconds ... could not work
+                    if (count($args) > 1) {
+                        $seconds = array_shift($args);
+                        if (!is_numeric($seconds)) {
+                            $sender->sendMessage('§b→§c [seconds] must be an int.An Higher value means less lag');
+                        }
+                        $seconds = $seconds + 0;
+                        $seconds <= 0 ? $seconds = 5 : $seconds = $seconds + 0;
+                    } else {
+                        $seconds = 5;
                     }
 
                     touch($path);
@@ -163,8 +174,8 @@ class SCHmain extends PluginBase implements Listener
                     $height = (int)$dataa->Height->getValue();
                     $length = (int)$dataa->Length->getValue();
                     $width = (int)$dataa->Width->getValue();
-                    //echo "H(y):$height L(z):$length W(x):$width" . PHP_EOL;
                     $i = -1;
+                    $sblocks = [];
                     if ($sender instanceof Player)
                         $pp = $sender->getPosition()->floor()->add(1, 0, 1);
                     for ($y = 0; $y < $height; $y++) {
@@ -213,27 +224,61 @@ class SCHmain extends PluginBase implements Listener
                                         break;
                                 endswitch;
 
-                                //echo "$x:$y:$z => $i" . PHP_EOL;
-
                                 if ($sender instanceof Player) {
                                     $pos = $pp->add($x, $y, $z);
                                     if ($pos->y > 128) break 3;
-                                    if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
-                                        $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
-                                    $sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
-                                    $sender->getLevel()->setBlockLightAt($pos->x, $pos->y, $pos->z, 15);
+                                    //if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
+                                    //   $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
+                                    //$sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
+                                    //$sender->getLevel()->setBlockLightAt($pos->x, $pos->y, $pos->z, 15);
+                                    $sblocks[] = ['x' => $pos->x, 'y' => $pos->y, 'z' => $pos->z, 'id' => $id, 'damage' => $damage];
                                 }
                             }
                         }
                     }
+                    if ($sender instanceof Player) {
+                        $a = floor((($width * $length * $height) / $seconds));
+                        $this->tobesent[$sender->getName()] = array_chunk($sblocks, $a);
+                        $this->set[$sender->getName()] = $sblocks;
+                    }
+                    unset($sblocks);
+                    $sender->sendMessage('§aLoaded!');
+                    break;
 
-                    $sender->sendMessage('§b→ §f' . realpath($path) . '§a pasted successfully');
+
+                case 'paste':
+                    if (!empty($args)) {
+                        $sender->sendMessage('§b→§cUsage: /sch paste');
+                        break;
+                    }
+
+                    if ($sender instanceof Player) {
+                        if (!array_key_exists($sender->getName(), $this->set)) {
+                            $sender->sendMessage('§b→§cBlocks not found, try §f/sch load');
+                            break;
+                        }
+                        $blocks = $this->set[$sender->getName()];
+
+                        foreach ($blocks as $block) {
+                            if (!$sender->getLevel()->isChunkLoaded($block['x'], $block['z']))
+                                $sender->getLevel()->loadChunk($block['x'], $block['z'], true);
+                            $sender->getLevel()->setBlockIdAt($block['x'], $block['y'], $block['z'], $block['id']);
+                            $sender->getLevel()->setBlockDataAt($block['x'], $block['y'], $block['z'], $block['damage']);
+                            $sender->getLevel()->setBlockLightAt($block['x'], $block['y'], $block['z'], 15);
+                        }
+
+                        unset($this->set[$sender->getName()], $blocks);
+                        if (array_key_exists($sender->getName(), $this->tobesent))
+                            unset($this->tobesent[$sender->getName()]);
+
+                        $sender->sendMessage('§aSchematic pasted successfully!');
+                    }
                     break;
 
 
                 default:
                     //No option found, usage
-                    $sender->sendMessage('§b→§cUsage: /sch [create|paste]');
+                    $sender->sendMessage('§b→§cUsage: /sch [create|load|paste]');
                     break;
 
 
@@ -275,7 +320,6 @@ class SCHmain extends PluginBase implements Listener
         $h = max($pos1->y, $pos2->y) - min($pos1->y, $pos2->y) + 1;
         $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z) + 1;
         $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x) + 1;
-        //echo "H(y):$h L(z):$l W(x):$w" . PHP_EOL;
 
         $pos1->x < $pos2->x ? $minx = $pos1->x : $minx = $pos2->x;
         $pos1->y < $pos2->y ? $miny = $pos1->y : $miny = $pos2->y;
@@ -364,5 +408,31 @@ class SCHmain extends PluginBase implements Listener
     private static function writeByte($c)
     {
         return chr($c);
+    }
+
+    public function sendBlocks(array $target, array $blocks, $flags = UpdateBlockPacket::FLAG_ALL_PRIORITY)
+    {
+        $pk = new UpdateBlockPacket();
+        foreach ($blocks as $b) {
+            $pk->records[] = [$b['x'], $b['z'], $b['y'], $b['id'], $b['damage'], $flags];
+        }
+        Server::broadcastPacket($target, $pk);
+    }
+
+    public function tick()
+    {
+        foreach ($this->tobesent as $playername => &$chunks) {
+            $player = $this->getServer()->getPlayerExact($playername);
+            if ($player instanceof Player) {
+                $blocks = array_shift($chunks);
+                self::sendBlocks([$player], $blocks);
+                if (empty($this->tobesent[$playername])) {
+                    $player->sendMessage('§aHologram pasted successfully! §f/sch paste §ato save changes');
+                    unset($this->tobesent[$playername]);
+                }
+            } else {
+                unset($this->tobesent[$playername]);
+            }
+        }
     }
 }
