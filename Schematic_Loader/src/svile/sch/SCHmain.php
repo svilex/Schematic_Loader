@@ -153,8 +153,7 @@ class SCHmain extends PluginBase implements Listener
                         break;
                     }
 
-                    //never tryed seconds ... could not work
-                    if (count($args) > 1) {
+                    if (!empty($args)) {
                         $seconds = array_shift($args);
                         if (!is_numeric($seconds)) {
                             $sender->sendMessage('§b→§c [seconds] must be an int.An Higher value means less lag');
@@ -237,8 +236,8 @@ class SCHmain extends PluginBase implements Listener
                         }
                     }
                     if ($sender instanceof Player) {
-                        $a = floor((($width * $length * $height) / $seconds));
-                        $this->tobesent[$sender->getName()] = array_chunk($sblocks, $a);
+                        $c = (int)floor((($width * $length * $height) / $seconds));
+                        $this->tobesent[$sender->getName()] = array_chunk($sblocks, $c);
                         $this->set[$sender->getName()] = $sblocks;
                     }
                     unset($sblocks);
