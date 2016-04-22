@@ -264,10 +264,6 @@ class SCHmain extends PluginBase implements Listener
                                     }
                                     $pos = $pp->add($ax, $y, $az);
                                     if ($pos->y > 128) break 3;
-                                    //if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
-                                    //   $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
-                                    //$sender->getLevel()->setBlock($pos, Block::get($id, $damage), false, false);
-                                    //$sender->getLevel()->setBlockLightAt($pos->x, $pos->y, $pos->z, 15);
                                     $sblocks[] = ['x' => $pos->x, 'y' => $pos->y, 'z' => $pos->z, 'id' => $id, 'damage' => $damage];
                                 }
                             }
@@ -358,10 +354,7 @@ class SCHmain extends PluginBase implements Listener
         $l = max($pos1->z, $pos2->z) - min($pos1->z, $pos2->z) + 1;
         $w = max($pos1->x, $pos2->x) - min($pos1->x, $pos2->x) + 1;
 
-        $pos1->x < $pos2->x ? $minx = $pos1->x : $minx = $pos2->x;
-        $pos1->y < $pos2->y ? $miny = $pos1->y : $miny = $pos2->y;
-        $pos1->z < $pos2->z ? $minz = $pos1->z : $minz = $pos2->z;
-        $origin = new Vector3($minx, $miny, $minz);
+        $origin = new Vector3(min($pos1->x, $pos2->x), min($pos1->y, $pos2->y), min($pos1->z, $pos2->z));
 
         $blocks = '';
         $data = '';
@@ -482,51 +475,40 @@ class SCHmain extends PluginBase implements Listener
     private static function rotate180(int $id, int $damage) : int
     {
         switch ($id) {
-            case 1:
+            case 50://TORCH
                 switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
                     case 3:
+                        $damage = 4;
                         break;
                     case 4:
+                        $damage = 3;
                         break;
                 }
                 break;
-            case 2:
+            case 67://STAIRS
+            case 53:
+            case 134:
+            case 135:
+            case 136:
+            case 163:
+            case 164:
+            case 108:
+            case 128:
+            case 109:
+            case 114:
+            case 156:
                 switch ($damage) {
-                    case 1:
-                        break;
                     case 2:
+                        $damage = 3;
                         break;
                     case 3:
+                        $damage = 2;
                         break;
-                    case 4:
+                    case 6:
+                        $damage = 7;
                         break;
-                }
-                break;
-            case 3:
-                switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
-                        break;
-                }
-                break;
-            case 4:
-                switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
+                    case 7:
+                        $damage = 6;
                         break;
                 }
                 break;
@@ -542,51 +524,58 @@ class SCHmain extends PluginBase implements Listener
     private static function rotate90(int $id, int $damage) : int
     {
         switch ($id) {
-            case 1:
+            case 50://TORCH
                 switch ($damage) {
                     case 1:
+                        $damage = 2;
                         break;
                     case 2:
+                        $damage = 1;
                         break;
                     case 3:
+                        $damage = 4;
                         break;
                     case 4:
+                        $damage = 3;
                         break;
                 }
                 break;
-            case 2:
+            case 67://STAIRS
+            case 53:
+            case 134:
+            case 135:
+            case 136:
+            case 163:
+            case 164:
+            case 108:
+            case 128:
+            case 109:
+            case 114:
+            case 156:
                 switch ($damage) {
+                    case 0:
+                        $damage = 1;
+                        break;
                     case 1:
+                        $damage = 0;
                         break;
                     case 2:
+                        $damage = 3;
                         break;
                     case 3:
+                        $damage = 2;
                         break;
                     case 4:
+                        $damage = 5;
                         break;
-                }
-                break;
-            case 3:
-                switch ($damage) {
-                    case 1:
+                    case 5:
+                        $damage = 4;
                         break;
-                    case 2:
+                    case 6:
+                        $damage = 7;
                         break;
-                    case 3:
-                        break;
-                    case 4:
-                        break;
-                }
-                break;
-            case 4:
-                switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
+                    case 7:
+                        $damage = 6;
                         break;
                 }
                 break;
@@ -602,51 +591,40 @@ class SCHmain extends PluginBase implements Listener
     private static function rotate0(int $id, int $damage) : int
     {
         switch ($id) {
-            case 1:
+            case 50://TORCH
                 switch ($damage) {
                     case 1:
+                        $damage = 2;
                         break;
                     case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
+                        $damage = 1;
                         break;
                 }
                 break;
-            case 2:
+            case 67://STAIRS
+            case 53:
+            case 134:
+            case 135:
+            case 136:
+            case 163:
+            case 164:
+            case 108:
+            case 128:
+            case 109:
+            case 114:
+            case 156:
                 switch ($damage) {
+                    case 0:
+                        $damage = 1;
+                        break;
                     case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
+                        $damage = 0;
                         break;
                     case 4:
+                        $damage = 5;
                         break;
-                }
-                break;
-            case 3:
-                switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
-                        break;
-                }
-                break;
-            case 4:
-                switch ($damage) {
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
+                    case 5:
+                        $damage = 4;
                         break;
                 }
                 break;
