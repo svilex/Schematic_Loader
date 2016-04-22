@@ -94,7 +94,7 @@ class SCHmain extends PluginBase implements Listener
         }
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->getServer()->getScheduler()->scheduleRepeatingTask(new SCHscheduler($this), 20);
+        $this->getServer()->getScheduler()->scheduleRepeatingTask(new SCHscheduler($this), 21);
 
         $this->getLogger()->info(@str_replace('\n', PHP_EOL, @gzinflate(@base64_decode("pZCxDoIwFEV/pbOJdGcSI2\x47\x51uOhI0pT6bBtbSsqr0S/iP/gy0woDjvrGc8+9w2u6pptGM41i88vNZSgCKudzMo234aENLPyo7wmy\x52NmCL2BAem5Z5V3ok6EQ+yGnFOcos0BXU+XWcm2Siwp\x69\x5aGAnI8uEs4tVaVShXS3KhKL0GXzSs1BgOWrBasev4Ody+81Jb4LUHWlfJDXjLC9Pxb4uD3++7Q0="))));
     }
@@ -175,8 +175,30 @@ class SCHmain extends PluginBase implements Listener
                     $width = (int)$dataa->Width->getValue();
                     $i = -1;
                     $sblocks = [];
-                    if ($sender instanceof Player)
-                        $pp = $sender->getPosition()->floor()->add(1, 0, 1);
+                    if ($sender instanceof Player) {
+                        $yaw = (int)floor($sender->getYaw());
+                        $xa = 1;
+                        $za = 1;
+                        $ax = 1;
+                        $az = 1;
+                        if ($yaw > 0) {
+                            $ax = -$xa;
+                            $az = $za;
+                        }
+                        if ($yaw > 90) {
+                            $ax = -$xa;
+                            $az = -$za;
+                        }
+                        if ($yaw > 180) {
+                            $ax = $xa;
+                            $az = -$za;
+                        }
+                        if ($yaw > 270) {
+                            $ax = $xa;
+                            $az = $za;
+                        }
+                        $pp = $sender->getPosition()->floor()->add($ax, 0, $az);
+                    }
                     for ($y = 0; $y < $height; $y++) {
                         for ($z = 0; $z < $length; $z++) {
                             for ($x = 0; $x < $width; $x++) {
@@ -224,7 +246,23 @@ class SCHmain extends PluginBase implements Listener
                                 endswitch;
 
                                 if ($sender instanceof Player) {
-                                    $pos = $pp->add($x, $y, $z);
+                                    if ($yaw > 270) {
+                                        $ax = $x;
+                                        $az = $z;
+                                    } elseif ($yaw > 180) {
+                                        $ax = $x;
+                                        $az = -$z;
+                                        $damage = self::rotate180($id, $damage);
+                                    } elseif ($yaw > 90) {
+                                        $ax = -$x;
+                                        $az = -$z;
+                                        $damage = self::rotate90($id, $damage);
+                                    } elseif ($yaw > 0) {
+                                        $ax = -$x;
+                                        $az = $z;
+                                        $damage = self::rotate0($id, $damage);
+                                    }
+                                    $pos = $pp->add($ax, $y, $az);
                                     if ($pos->y > 128) break 3;
                                     //if (!$sender->getLevel()->isChunkLoaded($pos->x, $pos->z))
                                     //   $sender->getLevel()->loadChunk($pos->x, $pos->z, true);
@@ -433,5 +471,186 @@ class SCHmain extends PluginBase implements Listener
                 unset($this->tobesent[$playername]);
             }
         }
+    }
+
+
+    /**
+     * @param int $id
+     * @param int $damage
+     * @return int
+     */
+    private static function rotate180(int $id, int $damage) : int
+    {
+        switch ($id) {
+            case 1:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 2:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 3:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 4:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+        }
+        return $damage;
+    }
+
+    /**
+     * @param int $id
+     * @param int $damage
+     * @return int
+     */
+    private static function rotate90(int $id, int $damage) : int
+    {
+        switch ($id) {
+            case 1:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 2:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 3:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 4:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+        }
+        return $damage;
+    }
+
+    /**
+     * @param int $id
+     * @param int $damage
+     * @return int
+     */
+    private static function rotate0(int $id, int $damage) : int
+    {
+        switch ($id) {
+            case 1:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 2:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 3:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+            case 4:
+                switch ($damage) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                }
+                break;
+        }
+        return $damage;
     }
 }
