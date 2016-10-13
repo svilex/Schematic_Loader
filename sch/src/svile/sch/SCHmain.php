@@ -366,18 +366,27 @@ class SCHmain extends PluginBase implements Listener
                     $id = $block->getId();
                     $damage = $block->getDamage();
 
-                    switch ($id):
-                        case 158:
-                            $id = 126;
-                            break;
-                        case 157:
-                            $id = 125;
-                            break;
-                        case 126:
-                            $id = 157;
-                            break;
+                    switch ($id){
+                        case 43:
+                            switch ($damage){
+                                case 6:
+                                    $damage = 7;
+                                    break;
+                                case 7:
+                                    $damage = 6;
+                                    break;
+                            }
+                        case 44:
+                            switch ($damage){
+                                case 6:
+                                    $damage = 7;
+                                    break;
+                                case 7:
+                                    $damage = 6;
+                                    break;
+                            }
                         case 85:
-                            switch ($damage) {
+                            switch ($damage){
                                 case 1:
                                     $id = 188;
                                     $damage = 0;
@@ -403,7 +412,47 @@ class SCHmain extends PluginBase implements Listener
                                     break;
                             }
                             break;
-                    endswitch;
+                        case 95:
+                            $id = 166;
+                            break;
+                        case 125:
+                            $id = 158;
+                            break;
+                        case 126:
+                            $id = 157;
+                            break;
+                        case 157:
+                            $id = 125;
+                            break;
+                        case 158:
+                            $id = 126;
+                            break;
+                        case 198:
+                            $id = 208;
+                            break;
+                        case 243:
+                            $id = 3;
+                            $damage = 2;
+                            break;
+                        case 245: // Stonecutter
+                            $id = 0;
+                            break;
+                        case 246: // Glowing Obsidian
+                            $id = 49; // to Normal Obsidian
+                            break;
+                        case 247: // Nether Reactor Core
+                            $id = 0;
+                            break;
+                        case 248: // update!
+                            $id = 0;
+                            break;
+                        case 249: // ate!upd
+                            $id = 0;
+                            break;
+                        case 251: // Observer block (from PC 1.11.0)
+                            $id = 218;
+                            break;
+                    }
 
                     $blocks .= self::writeByte($id);
                     $data .= self::writeByte($damage);
