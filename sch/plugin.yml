@@ -2,8 +2,8 @@ name: Schematic_Loader
 author: svile
 description: Schematic loader plugin
 main: svile\sch\SCHmain
-version: 0.1
-api: [1.13.0]
+version: 0.2
+api: [3.0.0, 3.0.0-ALPHA5]
 load: STARTUP
 
 commands:
