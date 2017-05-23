@@ -51,8 +51,8 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
-use pocketmine\network\protocol\UpdateBlockPacket;
-use pocketmine\Server;
+use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
+//use pocketmine\network\protocol\UpdateBlockPacket;
 
 use pocketmine\nbt\NBT;
 use pocketmine\nbt\tag\ByteArrayTag;
@@ -446,7 +446,7 @@ class SCHmain extends PluginBase implements Listener
         foreach ($blocks as $b) {
             $pk->records[] = [$b['x'], $b['z'], $b['y'], $b['id'], $b['damage'], $flags];
         }
-        Server::broadcastPacket($target, $pk);
+        $this->getServer()->broadcastPacket($target, $pk);
     }
 
     public function tick()
@@ -455,7 +455,7 @@ class SCHmain extends PluginBase implements Listener
             $player = $this->getServer()->getPlayerExact($playername);
             if ($player instanceof Player) {
                 $blocks = array_shift($chunks);
-                self::sendBlocks([$player], $blocks);
+                $this->sendBlocks([$player], $blocks);
                 if (empty($this->tobesent[$playername])) {
                     $player->sendMessage('§aHologram pasted successfully! §f/sch paste §ato save changes');
                     unset($this->tobesent[$playername]);
