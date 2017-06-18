@@ -68,7 +68,7 @@ use pocketmine\nbt\tag\StringTag;
 
 class SCHmain extends PluginBase implements Listener
 {
-    const SCH_VERSION = 0.1;
+    const SCH_VERSION = 0.2;
 
     private $players = [];
     private $tobesent = [];
